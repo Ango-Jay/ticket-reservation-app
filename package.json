@@ -1,0 +1,25 @@
+{
+  "name": "ticket-reservation",
+  "version": "0.0.1",
+  "private": true,
+  "description": "Ticket reservation monorepo",
+  "license": "UNLICENSED",
+  "scripts": {
+    "build": "pnpm --filter @ticket-reservation/server build",
+    "format": "pnpm --filter @ticket-reservation/server format",
+    "start": "pnpm --filter @ticket-reservation/server start",
+    "start:dev": "pnpm --filter @ticket-reservation/server start:dev",
+    "start:debug": "pnpm --filter @ticket-reservation/server start:debug",
+    "start:prod": "pnpm --filter @ticket-reservation/server start:prod",
+    "lint": "pnpm --filter @ticket-reservation/server lint",
+    "test": "pnpm --filter @ticket-reservation/server test",
+    "test:watch": "pnpm --filter @ticket-reservation/server test:watch",
+    "test:cov": "pnpm --filter @ticket-reservation/server test:cov",
+    "test:debug": "pnpm --filter @ticket-reservation/server test:debug",
+    "test:e2e": "pnpm --filter @ticket-reservation/server test:e2e"
+  },
+  "engines": {
+    "node": ">=20",
+    "pnpm": ">=9"
+  }
+}
