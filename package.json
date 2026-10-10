@@ -16,7 +16,12 @@
     "test:watch": "pnpm --filter @ticket-reservation/server test:watch",
     "test:cov": "pnpm --filter @ticket-reservation/server test:cov",
     "test:debug": "pnpm --filter @ticket-reservation/server test:debug",
-    "test:e2e": "pnpm --filter @ticket-reservation/server test:e2e"
+    "test:e2e": "pnpm --filter @ticket-reservation/server test:e2e",
+    "db:up": "docker compose up -d",
+    "db:down": "docker compose down",
+    "migration:run": "pnpm --filter @ticket-reservation/server migration:run",
+    "migration:revert": "pnpm --filter @ticket-reservation/server migration:revert",
+    "migration:generate": "pnpm --filter @ticket-reservation/server migration:generate"
   },
   "engines": {
     "node": ">=20",
