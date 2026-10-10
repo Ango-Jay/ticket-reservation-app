@@ -1,12 +1,15 @@
 import { Module } from '@nestjs/common';
-import { ConfigModule } from '@nestjs/config';
+import { ConfigModule, ConfigService } from '@nestjs/config';
 import { TypeOrmModule } from '@nestjs/typeorm';
+import { WinstonModule } from 'nest-winston';
 import { AdminsModule } from './api/admins/admins.module';
 import { EventsModule } from './api/events/events.module';
 import { ReservationsModule } from './api/reservations/reservations.module';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
+import { createWinstonOptions } from './common/logger/winston.config';
 import { envFilePaths } from './config/env';
+import { validateEnv } from './config/env.validation';
 import { typeOrmAsyncConfig } from './config/typeorm.config';
 
 @Module({
@@ -14,6 +17,12 @@ import { typeOrmAsyncConfig } from './config/typeorm.config';
     ConfigModule.forRoot({
       isGlobal: true,
       envFilePath: envFilePaths,
+      validate: validateEnv,
+    }),
+    WinstonModule.forRootAsync({
+      imports: [ConfigModule],
+      inject: [ConfigService],
+      useFactory: createWinstonOptions,
     }),
     TypeOrmModule.forRootAsync(typeOrmAsyncConfig),
     EventsModule,
