@@ -7,14 +7,18 @@ import { Env, EnvironmentVariables } from '../../config/env';
 import { Admin } from './admin.entity';
 import { AdminsController } from './admins.controller';
 import { AdminsService } from './admins.service';
+import { AdminSession } from './auth/admin-session.entity';
+import { AdminTokenBlacklist } from './auth/admin-token-blacklist.entity';
+import { AuthController } from './auth/auth.controller';
 import { AuthService } from './auth/auth.service';
+import { JwtAuthRefreshGuard } from './auth/jwt-auth-refresh.guard';
 import { JwtStrategy } from './auth/jwt.strategy';
 import { GoogleStrategy } from './sso/google.strategy';
 import { SsoController } from './sso/sso.controller';
 
 @Module({
   imports: [
-    TypeOrmModule.forFeature([Admin]),
+    TypeOrmModule.forFeature([Admin, AdminSession, AdminTokenBlacklist]),
     PassportModule.register({ defaultStrategy: 'jwt' }),
     JwtModule.registerAsync({
       imports: [ConfigModule],
@@ -22,20 +26,21 @@ import { SsoController } from './sso/sso.controller';
       useFactory: (config: ConfigService<EnvironmentVariables, true>) => ({
         secret: config.getOrThrow(Env.JWT_SECRET, { infer: true }),
         signOptions: {
-          expiresIn: config.getOrThrow(Env.JWT_EXPIRES_IN, {
+          expiresIn: config.getOrThrow(Env.JWT_ACCESS_EXPIRES_IN, {
             infer: true,
-          }) as `${number}d`,
+          }) as `${number}m`,
         },
       }),
     }),
   ],
-  controllers: [AdminsController, SsoController],
+  controllers: [AdminsController, SsoController, AuthController],
   providers: [
     AdminsService,
     AuthService,
     JwtStrategy,
+    JwtAuthRefreshGuard,
     GoogleStrategy,
   ],
-  exports: [TypeOrmModule, JwtModule, AuthService],
+  exports: [TypeOrmModule, JwtModule, AuthService, JwtAuthRefreshGuard],
 })
 export class AdminsModule {}

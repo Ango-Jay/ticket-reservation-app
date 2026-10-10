@@ -1,6 +1,8 @@
 import { join } from 'path';
 import { DataSource } from 'typeorm';
 import { Admin } from '../api/admins/admin.entity';
+import { AdminSession } from '../api/admins/auth/admin-session.entity';
+import { AdminTokenBlacklist } from '../api/admins/auth/admin-token-blacklist.entity';
 import { Event } from '../api/events/event.entity';
 import { TicketType } from '../api/events/ticket-type.entity';
 import { Reservation } from '../api/reservations/reservation.entity';
@@ -17,6 +19,13 @@ if (!databaseUrl) {
 export default new DataSource({
   type: 'postgres',
   url: databaseUrl,
-  entities: [Event, TicketType, Reservation, Admin],
+  entities: [
+    Event,
+    TicketType,
+    Reservation,
+    Admin,
+    AdminSession,
+    AdminTokenBlacklist,
+  ],
   migrations: [join(__dirname, '..', 'migrations', '*.{ts,js}')],
 });

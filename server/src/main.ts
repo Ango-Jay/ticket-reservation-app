@@ -21,6 +21,11 @@ async function bootstrap() {
   app.enableCors({
     origin: getCorsOrigins(config),
     credentials: true,
+    exposedHeaders: [
+      'X-Access-Token',
+      'X-Refresh-Token',
+      'X-Access-Token-Expires-In',
+    ],
   });
   app.useGlobalPipes(
     new ValidationPipe({

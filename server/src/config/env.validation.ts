@@ -29,6 +29,14 @@ const corsOriginsSchema = Joi.string()
       'CORS_ORIGINS must be a non-empty comma-separated list of absolute URLs',
   });
 
+const durationSchema = Joi.string()
+  .pattern(/^\d+[smhd]$/)
+  .required()
+  .messages({
+    'string.pattern.base':
+      'Duration must look like 15m, 7d, 30s, or 1h',
+  });
+
 export const envValidationSchema = Joi.object<EnvironmentVariables>({
   NODE_ENV: Joi.string()
     .valid('development', 'production', 'test')
@@ -50,7 +58,9 @@ export const envValidationSchema = Joi.object<EnvironmentVariables>({
   GOOGLE_CLIENT_SECRET: Joi.string().required(),
   GOOGLE_CALLBACK_URL: Joi.string().uri().required(),
   JWT_SECRET: Joi.string().min(16).required(),
-  JWT_EXPIRES_IN: Joi.string().required(),
+  JWT_ACCESS_EXPIRES_IN: durationSchema,
+  JWT_REFRESH_EXPIRES_IN: durationSchema,
+  JWT_REFRESH_GRACE_MS: Joi.number().integer().min(0).required(),
   ADMIN_BOOTSTRAP_EMAIL: Joi.string().email().optional().allow(''),
 });
 

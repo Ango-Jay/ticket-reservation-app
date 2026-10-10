@@ -1,5 +1,5 @@
 import { Controller, Get, Req, UseGuards } from '@nestjs/common';
-import { AuthService, GoogleProfile } from '../auth/auth.service';
+import { AuthService, GoogleProfile, TokenPair } from '../auth/auth.service';
 import { GoogleAuthGuard } from './google-auth.guard';
 
 @Controller('admins/sso')
@@ -16,7 +16,7 @@ export class SsoController {
   @UseGuards(GoogleAuthGuard)
   async googleCallback(
     @Req() req: { user: GoogleProfile },
-  ): Promise<{ accessToken: string }> {
+  ): Promise<TokenPair> {
     return this.authService.loginWithGoogle(req.user);
   }
 }
