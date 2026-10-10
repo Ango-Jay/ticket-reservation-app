@@ -6,7 +6,8 @@ pnpm monorepo for the ticket reservation project.
 
 ```
 .
-├── server/   # NestJS API (@ticket-reservation/server)
+├── docker-compose.yml   # Postgres 16
+├── server/              # NestJS API (@ticket-reservation/server)
 └── package.json
 ```
 
@@ -14,6 +15,9 @@ pnpm monorepo for the ticket reservation project.
 
 ```bash
 pnpm install
+cp .env.example .env
+pnpm db:up              # start Postgres (requires Docker)
+pnpm migration:run      # apply schema
 ```
 
 ## Scripts
@@ -25,6 +29,9 @@ pnpm start:dev   # watch mode
 pnpm build
 pnpm test
 pnpm lint
+pnpm db:up       # start Postgres
+pnpm db:down     # stop Postgres
+pnpm migration:run
 ```
 
 Or target the package directly:

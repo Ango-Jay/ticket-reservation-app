@@ -46,6 +46,12 @@ export const envValidationSchema = Joi.object<EnvironmentVariables>({
   LOG_LEVEL: Joi.string()
     .valid('error', 'warn', 'info', 'http', 'verbose', 'debug', 'silly')
     .required(),
+  GOOGLE_CLIENT_ID: Joi.string().required(),
+  GOOGLE_CLIENT_SECRET: Joi.string().required(),
+  GOOGLE_CALLBACK_URL: Joi.string().uri().required(),
+  JWT_SECRET: Joi.string().min(16).required(),
+  JWT_EXPIRES_IN: Joi.string().required(),
+  ADMIN_BOOTSTRAP_EMAIL: Joi.string().email().optional().allow(''),
 });
 
 export function validateEnv(

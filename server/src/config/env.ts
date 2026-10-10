@@ -26,6 +26,12 @@ export const Env = {
   POSTGRES_DB: 'POSTGRES_DB',
   CORS_ORIGINS: 'CORS_ORIGINS',
   LOG_LEVEL: 'LOG_LEVEL',
+  GOOGLE_CLIENT_ID: 'GOOGLE_CLIENT_ID',
+  GOOGLE_CLIENT_SECRET: 'GOOGLE_CLIENT_SECRET',
+  GOOGLE_CALLBACK_URL: 'GOOGLE_CALLBACK_URL',
+  JWT_SECRET: 'JWT_SECRET',
+  JWT_EXPIRES_IN: 'JWT_EXPIRES_IN',
+  ADMIN_BOOTSTRAP_EMAIL: 'ADMIN_BOOTSTRAP_EMAIL',
 } as const;
 
 export type EnvKey = (typeof Env)[keyof typeof Env];
@@ -53,6 +59,13 @@ export interface EnvironmentVariables {
   /** Comma-separated list of allowed CORS origins. */
   CORS_ORIGINS: string;
   LOG_LEVEL: LogLevel;
+  GOOGLE_CLIENT_ID: string;
+  GOOGLE_CLIENT_SECRET: string;
+  GOOGLE_CALLBACK_URL: string;
+  JWT_SECRET: string;
+  JWT_EXPIRES_IN: string;
+  /** Used only when admins table is empty. */
+  ADMIN_BOOTSTRAP_EMAIL?: string;
 }
 
 /** Comma-separated CORS_ORIGINS env → allowed origin list. */

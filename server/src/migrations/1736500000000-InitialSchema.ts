@@ -77,11 +77,19 @@ export class InitialSchema1736500000000 implements MigrationInterface {
       CREATE TABLE "admins" (
         "id" uuid NOT NULL DEFAULT uuid_generate_v4(),
         "email" character varying(255) NOT NULL,
-        "password_hash" character varying(255) NOT NULL,
+        "password_hash" character varying(255),
+        "google_sub" character varying(255),
+        "first_name" character varying(255),
+        "last_name" character varying(255),
+        "status" character varying(32) NOT NULL DEFAULT 'pending',
         "created_at" TIMESTAMPTZ NOT NULL DEFAULT now(),
         "updated_at" TIMESTAMPTZ NOT NULL DEFAULT now(),
         CONSTRAINT "PK_admins_id" PRIMARY KEY ("id"),
-        CONSTRAINT "UQ_admins_email" UNIQUE ("email")
+        CONSTRAINT "UQ_admins_email" UNIQUE ("email"),
+        CONSTRAINT "UQ_admins_google_sub" UNIQUE ("google_sub"),
+        CONSTRAINT "CHK_admins_status" CHECK (
+          "status" IN ('pending', 'active', 'inactive')
+        )
       )
     `);
   }
