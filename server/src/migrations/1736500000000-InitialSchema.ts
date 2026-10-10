@@ -24,7 +24,8 @@ export class InitialSchema1736500000000 implements MigrationInterface {
         "id" uuid NOT NULL DEFAULT uuid_generate_v4(),
         "event_id" uuid NOT NULL,
         "name" character varying(255) NOT NULL,
-        "price_cents" integer NOT NULL,
+        "price" numeric(12,2) NOT NULL,
+        "currency" character varying(3) NOT NULL DEFAULT 'NGN',
         "quantity" integer NOT NULL,
         "created_at" TIMESTAMPTZ NOT NULL DEFAULT now(),
         "updated_at" TIMESTAMPTZ NOT NULL DEFAULT now(),
@@ -32,7 +33,8 @@ export class InitialSchema1736500000000 implements MigrationInterface {
         CONSTRAINT "FK_ticket_types_event_id" FOREIGN KEY ("event_id")
           REFERENCES "events"("id") ON DELETE CASCADE ON UPDATE NO ACTION,
         CONSTRAINT "CHK_ticket_types_quantity_nonnegative" CHECK ("quantity" >= 0),
-        CONSTRAINT "CHK_ticket_types_price_cents_nonnegative" CHECK ("price_cents" >= 0)
+        CONSTRAINT "CHK_ticket_types_price_nonnegative" CHECK ("price" >= 0),
+        CONSTRAINT "CHK_ticket_types_currency_format" CHECK ("currency" ~ '^[A-Z]{3}$')
       )
     `);
 

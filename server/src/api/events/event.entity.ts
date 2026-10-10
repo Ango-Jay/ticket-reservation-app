@@ -2,14 +2,17 @@ import {
   Column,
   CreateDateColumn,
   Entity,
+  Index,
   OneToMany,
   PrimaryGeneratedColumn,
   UpdateDateColumn,
 } from 'typeorm';
 import { Reservation } from '../reservations/reservation.entity';
+import { EventStatus } from './enums';
 import { TicketType } from './ticket-type.entity';
 
 @Entity({ name: 'events' })
+@Index('IDX_events_status', ['status'])
 export class Event {
   @PrimaryGeneratedColumn('uuid')
   id: string;
@@ -23,8 +26,18 @@ export class Event {
   @Column({ name: 'starts_at', type: 'timestamptz' })
   startsAt: Date;
 
+  @Column({ name: 'expires_at', type: 'timestamptz', nullable: true })
+  expiresAt: Date | null;
+
   @Column({ type: 'varchar', length: 255, nullable: true })
   location: string | null;
+
+  @Column({
+    type: 'varchar',
+    length: 32,
+    default: EventStatus.Active,
+  })
+  status: EventStatus;
 
   @OneToMany(() => TicketType, (ticketType) => ticketType.event)
   ticketTypes: TicketType[];

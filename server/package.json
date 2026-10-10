@@ -33,6 +33,7 @@
     "@nestjs/typeorm": "^11.0.3",
     "class-transformer": "^0.5.1",
     "class-validator": "^0.15.1",
+    "decimal.js": "^10.6.0",
     "helmet": "^8.3.0",
     "joi": "^18.2.9",
     "nest-winston": "^2.0.0",

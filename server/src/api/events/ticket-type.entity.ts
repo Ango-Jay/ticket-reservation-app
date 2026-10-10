@@ -1,3 +1,4 @@
+import Decimal from 'decimal.js';
 import {
   Column,
   CreateDateColumn,
@@ -9,6 +10,7 @@ import {
   PrimaryGeneratedColumn,
   UpdateDateColumn,
 } from 'typeorm';
+import { decimalTransformer } from '../../utils/decimal.transformer';
 import { Reservation } from '../reservations/reservation.entity';
 import { Event } from './event.entity';
 
@@ -30,8 +32,16 @@ export class TicketType {
   @Column({ type: 'varchar', length: 255 })
   name: string;
 
-  @Column({ name: 'price_cents', type: 'int' })
-  priceCents: number;
+  @Column({
+    type: 'numeric',
+    precision: 12,
+    scale: 2,
+    transformer: decimalTransformer,
+  })
+  price: Decimal;
+
+  @Column({ type: 'varchar', length: 3, default: 'NGN' })
+  currency: string;
 
   @Column({ type: 'int' })
   quantity: number;
