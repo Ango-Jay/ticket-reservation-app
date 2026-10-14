@@ -15,7 +15,9 @@ import { ReservationStatus } from './enums';
 @Entity({ name: 'reservations' })
 @Index('IDX_reservations_event_id', ['eventId'])
 @Index('IDX_reservations_email', ['email'])
-@Index('IDX_reservations_status_expires_at', ['status', 'expiresAt'])
+@Index('IDX_reservations_held_expires_at', ['expiresAt'], {
+  where: `"status" = 'held'`,
+})
 export class Reservation {
   @PrimaryGeneratedColumn('uuid')
   id: string;

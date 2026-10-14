@@ -76,7 +76,7 @@ export class InitialSchema1736500000000 implements MigrationInterface {
       `CREATE INDEX "IDX_reservations_email" ON "reservations" ("email")`,
     );
     await queryRunner.query(
-      `CREATE INDEX "IDX_reservations_status_expires_at" ON "reservations" ("status", "expires_at")`,
+      `CREATE INDEX "IDX_reservations_held_expires_at" ON "reservations" ("expires_at") WHERE "status" = 'held'`,
     );
 
     await queryRunner.query(`

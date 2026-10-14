@@ -1,5 +1,6 @@
 import { Module } from '@nestjs/common';
 import { ConfigModule, ConfigService } from '@nestjs/config';
+import { ScheduleModule } from '@nestjs/schedule';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { WinstonModule } from 'nest-winston';
 import { AdminsModule } from './api/admins/admins.module';
@@ -19,6 +20,7 @@ import { typeOrmAsyncConfig } from './config/typeorm.config';
       envFilePath: envFilePaths,
       validate: validateEnv,
     }),
+    ScheduleModule.forRoot(),
     WinstonModule.forRootAsync({
       imports: [ConfigModule],
       inject: [ConfigService],
