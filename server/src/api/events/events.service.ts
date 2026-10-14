@@ -7,6 +7,7 @@ import {
 import { InjectRepository } from '@nestjs/typeorm';
 import Decimal from 'decimal.js';
 import { DataSource, EntityManager, In, Not, Repository } from 'typeorm';
+import { randomAlphanumeric, slugify } from '../../utils/slugify';
 import { ReservationStatus } from '../reservations/enums';
 import { Reservation } from '../reservations/reservation.entity';
 import { CreateEventDto } from './dto/create-event.dto';
@@ -58,6 +59,17 @@ export class EventsService {
     return event;
   }
 
+  async findBySlug(slug: string): Promise<Event> {
+    const event = await this.eventsRepository.findOne({
+      where: { slug, status: Not(EventStatus.Inactive) },
+      relations: { ticketTypes: true },
+    });
+    if (!event) {
+      throw new NotFoundException('Event not found');
+    }
+    return event;
+  }
+
   async getAvailability(id: string): Promise<EventAvailability> {
     const event = await this.findOne(id);
     const reservedByType = await this.sumReservedByTicketType(event.id);
@@ -79,8 +91,13 @@ export class EventsService {
 
   async create(dto: CreateEventDto): Promise<Event> {
     return this.dataSource.transaction(async (manager) => {
+      const slug = await this.resolveUniqueSlug(
+        manager,
+        dto.slug ?? slugify(dto.title),
+      );
       const event = manager.create(Event, {
         title: dto.title,
+        slug,
         description: dto.description ?? null,
         startsAt: new Date(dto.startsAt),
         expiresAt: dto.expiresAt ? new Date(dto.expiresAt) : null,
@@ -115,6 +132,15 @@ export class EventsService {
 
       if (dto.title !== undefined) {
         event.title = dto.title;
+      }
+      if (dto.slug !== undefined) {
+        event.slug = await this.resolveUniqueSlug(manager, dto.slug, event.id);
+      } else if (dto.title !== undefined) {
+        event.slug = await this.resolveUniqueSlug(
+          manager,
+          slugify(dto.title),
+          event.id,
+        );
       }
       if (dto.description !== undefined) {
         event.description = dto.description;
@@ -155,6 +181,29 @@ export class EventsService {
     }
     event.status = EventStatus.Inactive;
     await this.eventsRepository.save(event);
+  }
+
+  private async resolveUniqueSlug(
+    manager: EntityManager,
+    base: string,
+    excludeEventId?: string,
+  ): Promise<string> {
+    const normalized = slugify(base);
+    let candidate = normalized;
+    let attempt = 0;
+
+    while (attempt < 20) {
+      const existing = await manager.findOne(Event, {
+        where: { slug: candidate },
+      });
+      if (!existing || existing.id === excludeEventId) {
+        return candidate;
+      }
+      attempt += 1;
+      candidate = slugify(`${normalized}-${randomAlphanumeric(4).toLowerCase()}`);
+    }
+
+    throw new ConflictException('Unable to allocate a unique event slug');
   }
 
   private async syncTicketTypes(

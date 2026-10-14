@@ -29,6 +29,11 @@ export class EventsController {
     return this.eventsService.findAll();
   }
 
+  @Get('events/slug/:slug')
+  findBySlug(@Param('slug') slug: string): Promise<Event> {
+    return this.eventsService.findBySlug(slug);
+  }
+
   @Get('events/:id/availability')
   getAvailability(
     @Param('id', ParseUUIDPipe) id: string,

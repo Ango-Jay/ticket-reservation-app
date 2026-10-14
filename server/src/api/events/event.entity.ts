@@ -20,6 +20,9 @@ export class Event {
   @Column({ type: 'varchar', length: 255 })
   title: string;
 
+  @Column({ type: 'varchar', length: 80, unique: true })
+  slug: string;
+
   @Column({ type: 'text', nullable: true })
   description: string | null;
 

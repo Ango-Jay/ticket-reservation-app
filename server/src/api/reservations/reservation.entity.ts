@@ -20,6 +20,14 @@ export class Reservation {
   @PrimaryGeneratedColumn('uuid')
   id: string;
 
+  @Column({
+    name: 'reservation_number',
+    type: 'varchar',
+    length: 80,
+    unique: true,
+  })
+  reservationNumber: string;
+
   @Column({ name: 'event_id', type: 'uuid' })
   eventId: string;
 

@@ -10,12 +10,14 @@ export class InitialSchema1736500000000 implements MigrationInterface {
       CREATE TABLE "events" (
         "id" uuid NOT NULL DEFAULT uuid_generate_v4(),
         "title" character varying(255) NOT NULL,
+        "slug" character varying(80) NOT NULL,
         "description" text,
         "starts_at" TIMESTAMPTZ NOT NULL,
         "location" character varying(255),
         "created_at" TIMESTAMPTZ NOT NULL DEFAULT now(),
         "updated_at" TIMESTAMPTZ NOT NULL DEFAULT now(),
-        CONSTRAINT "PK_events_id" PRIMARY KEY ("id")
+        CONSTRAINT "PK_events_id" PRIMARY KEY ("id"),
+        CONSTRAINT "UQ_events_slug" UNIQUE ("slug")
       )
     `);
 
@@ -47,6 +49,7 @@ export class InitialSchema1736500000000 implements MigrationInterface {
         "id" uuid NOT NULL DEFAULT uuid_generate_v4(),
         "event_id" uuid NOT NULL,
         "ticket_type_id" uuid NOT NULL,
+        "reservation_number" character varying(80) NOT NULL,
         "email" character varying(255) NOT NULL,
         "quantity" integer NOT NULL,
         "status" character varying(32) NOT NULL DEFAULT 'held',
@@ -54,6 +57,7 @@ export class InitialSchema1736500000000 implements MigrationInterface {
         "created_at" TIMESTAMPTZ NOT NULL DEFAULT now(),
         "updated_at" TIMESTAMPTZ NOT NULL DEFAULT now(),
         CONSTRAINT "PK_reservations_id" PRIMARY KEY ("id"),
+        CONSTRAINT "UQ_reservations_reservation_number" UNIQUE ("reservation_number"),
         CONSTRAINT "FK_reservations_event_id" FOREIGN KEY ("event_id")
           REFERENCES "events"("id") ON DELETE CASCADE ON UPDATE NO ACTION,
         CONSTRAINT "FK_reservations_ticket_type_id" FOREIGN KEY ("ticket_type_id")
