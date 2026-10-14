@@ -6,10 +6,12 @@ import {
   ParseUUIDPipe,
   Post,
 } from '@nestjs/common';
+import { ApiTags } from '@nestjs/swagger';
 import { CreateReservationDto } from './dto/create-reservation.dto';
 import { Reservation } from './reservation.entity';
 import { ReservationsService } from './reservations.service';
 
+@ApiTags('reservations')
 @Controller()
 export class ReservationsController {
   constructor(private readonly reservationsService: ReservationsService) {}

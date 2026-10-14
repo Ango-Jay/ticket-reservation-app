@@ -1,4 +1,5 @@
 import { Exclude } from 'class-transformer';
+import { ApiHideProperty } from '@nestjs/swagger';
 import {
   Column,
   CreateDateColumn,
@@ -16,10 +17,12 @@ export class Admin {
   @Column({ type: 'varchar', length: 255, unique: true })
   email: string;
 
+  @ApiHideProperty()
   @Exclude()
   @Column({ name: 'password_hash', type: 'varchar', length: 255, nullable: true })
   passwordHash: string | null;
 
+  @ApiHideProperty()
   @Exclude()
   @Column({ name: 'google_sub', type: 'varchar', length: 255, nullable: true, unique: true })
   googleSub: string | null;

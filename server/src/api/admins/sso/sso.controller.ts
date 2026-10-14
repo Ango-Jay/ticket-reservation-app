@@ -1,7 +1,9 @@
 import { Controller, Get, Req, UseGuards } from '@nestjs/common';
+import { ApiTags } from '@nestjs/swagger';
 import { AuthService, GoogleProfile, TokenPair } from '../auth/auth.service';
 import { GoogleAuthGuard } from './google-auth.guard';
 
+@ApiTags('admins-sso')
 @Controller('admins/sso')
 export class SsoController {
   constructor(private readonly authService: AuthService) {}

@@ -11,6 +11,7 @@ import {
   Put,
   UseGuards,
 } from '@nestjs/common';
+import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
 import { Admin } from './admin.entity';
 import { AdminsService } from './admins.service';
 import { CurrentAdmin } from './auth/current-admin.decorator';
@@ -18,6 +19,8 @@ import { JwtAuthGuard } from './auth/jwt-auth.guard';
 import { InviteAdminDto } from './dto/invite-admin.dto';
 import { UpdateAdminDto } from './dto/update-admin.dto';
 
+@ApiTags('admins')
+@ApiBearerAuth()
 @Controller()
 export class AdminsController {
   constructor(private readonly adminsService: AdminsService) {}

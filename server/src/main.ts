@@ -5,6 +5,7 @@ import {
 } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { NestFactory, Reflector } from '@nestjs/core';
+import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 import helmet from 'helmet';
 import { WINSTON_MODULE_NEST_PROVIDER } from 'nest-winston';
 import { AppModule } from './app.module';
@@ -17,7 +18,19 @@ async function bootstrap() {
   const logger = app.get<LoggerService>(WINSTON_MODULE_NEST_PROVIDER);
 
   app.useLogger(logger);
-  app.use(helmet());
+  app.use(
+    helmet({
+      contentSecurityPolicy: {
+        directives: {
+          defaultSrc: [`'self'`],
+          styleSrc: [`'self'`, `'unsafe-inline'`],
+          imgSrc: [`'self'`, 'data:', 'validator.swagger.io'],
+          scriptSrc: [`'self'`, `https: 'unsafe-inline'`],
+          connectSrc: [`'self'`],
+        },
+      },
+    }),
+  );
   app.enableCors({
     origin: getCorsOrigins(config),
     credentials: true,
@@ -37,6 +50,27 @@ async function bootstrap() {
   app.useGlobalInterceptors(new ClassSerializerInterceptor(app.get(Reflector)));
   app.useGlobalFilters(new AllExceptionsFilter(logger));
 
-  await app.listen(config.getOrThrow(Env.PORT, { infer: true }));
+  const nodeEnv = config.getOrThrow(Env.NODE_ENV, { infer: true });
+  if (nodeEnv !== 'production') {
+    const swaggerConfig = new DocumentBuilder()
+      .setTitle('Ticket Reservation API')
+      .setDescription('Admin, events, and reservation endpoints')
+      .setVersion('0.1')
+      .addBearerAuth()
+      .addApiKey(
+        { type: 'apiKey', name: 'x-refresh-token', in: 'header' },
+        'refresh-token',
+      )
+      .build();
+    const document = SwaggerModule.createDocument(app, swaggerConfig);
+    SwaggerModule.setup('docs', app, document);
+  }
+
+  const port = config.getOrThrow(Env.PORT, { infer: true });
+  await app.listen(port);
+
+  if (nodeEnv !== 'production') {
+    logger.log?.(`Swagger docs available at http://localhost:${port}/docs`);
+  }
 }
 bootstrap();

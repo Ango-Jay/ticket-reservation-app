@@ -7,16 +7,20 @@ import {
   UnauthorizedException,
   UseGuards,
 } from '@nestjs/common';
+import { ApiBearerAuth, ApiSecurity, ApiTags } from '@nestjs/swagger';
 import { AuthService } from './auth.service';
 import { REFRESH_TOKEN_HEADER } from './auth-headers';
 import { JwtAuthGuard } from './jwt-auth.guard';
 
+@ApiTags('admins-auth')
 @Controller('admins/auth')
 export class AuthController {
   constructor(private readonly authService: AuthService) {}
 
   @Post('logout')
   @UseGuards(JwtAuthGuard)
+  @ApiBearerAuth()
+  @ApiSecurity('refresh-token')
   @HttpCode(HttpStatus.NO_CONTENT)
   async logout(
     @Headers('authorization') authorization?: string,
