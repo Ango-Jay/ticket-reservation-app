@@ -1,21 +1,29 @@
 import {
   ConflictException,
   Injectable,
+  Logger,
   NotFoundException,
 } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
-import { AdminStatus } from './enums';
+import { NotificationService } from '../../common/notification/notification.service';
+import { Env, EnvironmentVariables } from '../../config/env';
+import { normalizeEmail } from '../../utils/normalize-email';
 import { Admin } from './admin.entity';
 import { InviteAdminDto } from './dto/invite-admin.dto';
 import { UpdateAdminDto } from './dto/update-admin.dto';
-import { normalizeEmail } from '../../utils/normalize-email';
+import { AdminStatus } from './enums';
 
 @Injectable()
 export class AdminsService {
+  private readonly logger = new Logger(AdminsService.name);
+
   constructor(
     @InjectRepository(Admin)
     private readonly adminsRepository: Repository<Admin>,
+    private readonly notificationService: NotificationService,
+    private readonly config: ConfigService<EnvironmentVariables, true>,
   ) {}
 
   async invite(dto: InviteAdminDto): Promise<Admin> {
@@ -34,7 +42,31 @@ export class AdminsService {
       status: AdminStatus.Pending,
     });
 
-    return this.adminsRepository.save(admin);
+    const saved = await this.adminsRepository.save(admin);
+
+    const callbackUrl = this.config.getOrThrow(Env.GOOGLE_CALLBACK_URL, {
+      infer: true,
+    });
+    const inviteUrl = new URL('/admins/sso/google', callbackUrl).toString();
+
+    this.notificationService
+      .sendEmail({
+        to: saved.email,
+        subject: 'You are invited to Ticket Days',
+        template: 'invite-admin',
+        context: {
+          email: saved.email,
+          inviteUrl,
+        },
+      })
+      .catch((err: unknown) => {
+        this.logger.error(
+          `Invite email failed for ${saved.email}`,
+          err instanceof Error ? err.stack : err,
+        );
+      });
+
+    return saved;
   }
 
   async findAll(): Promise<Admin[]> {

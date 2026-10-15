@@ -35,6 +35,8 @@ export const Env = {
   JWT_REFRESH_GRACE_MS: 'JWT_REFRESH_GRACE_MS',
   RESERVATION_HOLD_EXPIRES_IN: 'RESERVATION_HOLD_EXPIRES_IN',
   ADMIN_BOOTSTRAP_EMAIL: 'ADMIN_BOOTSTRAP_EMAIL',
+  RESEND_API_KEY: 'RESEND_API_KEY',
+  EMAIL_FROM: 'EMAIL_FROM',
 } as const;
 
 export type EnvKey = (typeof Env)[keyof typeof Env];
@@ -72,6 +74,8 @@ export interface EnvironmentVariables {
   RESERVATION_HOLD_EXPIRES_IN: string;
   /** Used only when admins table is empty. */
   ADMIN_BOOTSTRAP_EMAIL?: string;
+  RESEND_API_KEY: string;
+  EMAIL_FROM: string;
 }
 
 /** Comma-separated CORS_ORIGINS env → allowed origin list. */

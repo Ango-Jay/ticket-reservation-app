@@ -9,6 +9,7 @@ import { ReservationsModule } from './api/reservations/reservations.module';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { createWinstonOptions } from './common/logger/winston.config';
+import { NotificationModule } from './common/notification/notification.module';
 import { envFilePaths } from './config/env';
 import { validateEnv } from './config/env.validation';
 import { typeOrmAsyncConfig } from './config/typeorm.config';
@@ -27,6 +28,7 @@ import { typeOrmAsyncConfig } from './config/typeorm.config';
       useFactory: createWinstonOptions,
     }),
     TypeOrmModule.forRootAsync(typeOrmAsyncConfig),
+    NotificationModule,
     EventsModule,
     ReservationsModule,
     AdminsModule,
