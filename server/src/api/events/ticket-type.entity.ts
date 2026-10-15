@@ -1,3 +1,4 @@
+import { Transform } from 'class-transformer';
 import Decimal from 'decimal.js';
 import {
   Column,
@@ -38,6 +39,11 @@ export class TicketType {
     scale: 2,
     transformer: decimalTransformer,
   })
+  @Transform(
+    ({ value }: { value: Decimal }) =>
+      value == null ? value : Number(new Decimal(value).toFixed(2)),
+    { toPlainOnly: true },
+  )
   price: Decimal;
 
   @Column({ type: 'varchar', length: 3, default: 'NGN' })
