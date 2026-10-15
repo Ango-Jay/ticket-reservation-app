@@ -31,7 +31,7 @@ export class AdminsController {
     return admin;
   }
 
-  @Post('admins')
+  @Post('admins/invite')
   @UseGuards(JwtAuthGuard)
   invite(@Body() dto: InviteAdminDto): Promise<Admin> {
     return this.adminsService.invite(dto);
