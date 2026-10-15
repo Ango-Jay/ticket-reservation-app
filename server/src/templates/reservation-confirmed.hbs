@@ -1,0 +1,20 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Reservation confirmed</title>
+  </head>
+  <body style="font-family: system-ui, sans-serif; line-height: 1.5; color: #111;">
+    <p>Hello{{#if email}} {{email}}{{/if}},</p>
+    <p>
+      Your reservation for <strong>{{eventTitle}}</strong> is confirmed.
+    </p>
+    <ul style="padding-left: 1.25rem;">
+      <li>Reservation number: <strong>{{reservationNumber}}</strong></li>
+      <li>Ticket type: <strong>{{ticketTypeName}}</strong></li>
+      <li>Quantity: <strong>{{quantity}}</strong></li>
+    </ul>
+    <p>Keep this email for your records. We look forward to seeing you at the event.</p>
+  </body>
+</html>

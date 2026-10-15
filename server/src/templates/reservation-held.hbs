@@ -1,0 +1,24 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Reservation held</title>
+  </head>
+  <body style="font-family: system-ui, sans-serif; line-height: 1.5; color: #111;">
+    <p>Hello{{#if email}} {{email}}{{/if}},</p>
+    <p>
+      Your tickets for <strong>{{eventTitle}}</strong> are on hold.
+    </p>
+    <ul style="padding-left: 1.25rem;">
+      <li>Reservation number: <strong>{{reservationNumber}}</strong></li>
+      <li>Ticket type: <strong>{{ticketTypeName}}</strong></li>
+      <li>Quantity: <strong>{{quantity}}</strong></li>
+      <li>Hold expires at: <strong>{{expiresAt}}</strong></li>
+    </ul>
+    <p>
+      Please confirm this reservation using your reservation number before the hold expires.
+      Unconfirmed holds are released automatically after the expiry time.
+    </p>
+  </body>
+</html>

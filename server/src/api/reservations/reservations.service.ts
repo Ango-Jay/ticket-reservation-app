@@ -2,11 +2,13 @@ import {
   BadRequestException,
   ConflictException,
   Injectable,
+  Logger,
   NotFoundException,
 } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { InjectRepository } from '@nestjs/typeorm';
 import { DataSource, EntityManager, Repository } from 'typeorm';
+import { NotificationService } from '../../common/notification/notification.service';
 import { Env, EnvironmentVariables } from '../../config/env';
 import { parseDurationToMs } from '../../utils/parse-duration';
 import { randomAlphanumeric } from '../../utils/slugify';
@@ -19,64 +21,96 @@ import { Reservation } from './reservation.entity';
 
 @Injectable()
 export class ReservationsService {
+  private readonly logger = new Logger(ReservationsService.name);
+
   constructor(
     @InjectRepository(Reservation)
     private readonly reservationsRepository: Repository<Reservation>,
     private readonly dataSource: DataSource,
     private readonly config: ConfigService<EnvironmentVariables, true>,
+    private readonly notificationService: NotificationService,
   ) {}
 
   async create(
     eventId: string,
     dto: CreateReservationDto,
   ): Promise<Reservation> {
-    return this.dataSource.transaction(async (manager) => {
-      const event = await manager.findOne(Event, {
-        where: { id: eventId, status: EventStatus.Active },
+    const { reservation, eventTitle, ticketTypeName } =
+      await this.dataSource.transaction(async (manager) => {
+        const event = await manager.findOne(Event, {
+          where: { id: eventId, status: EventStatus.Active },
+        });
+        if (!event) {
+          throw new NotFoundException('Event not found');
+        }
+
+        const ticketType = await manager.findOne(TicketType, {
+          where: { id: dto.ticketTypeId, eventId: event.id },
+          lock: { mode: 'pessimistic_write' },
+        });
+        if (!ticketType) {
+          throw new NotFoundException('Ticket type not found for this event');
+        }
+
+        const reserved = await this.getSumOfReservedForTicketType(
+          manager,
+          ticketType.id,
+        );
+        const available = ticketType.quantity - reserved;
+        if (dto.quantity > available) {
+          throw new ConflictException('Not enough tickets available');
+        }
+
+        const reservationNumber = await this.allocateReservationNumber(
+          manager,
+          event.slug,
+        );
+        const holdMs = parseDurationToMs(
+          this.config.getOrThrow(Env.RESERVATION_HOLD_EXPIRES_IN, {
+            infer: true,
+          }),
+        );
+
+        const created = manager.create(Reservation, {
+          eventId: event.id,
+          ticketTypeId: ticketType.id,
+          reservationNumber,
+          email: dto.email,
+          quantity: dto.quantity,
+          status: ReservationStatus.Held,
+          expiresAt: new Date(Date.now() + holdMs),
+        });
+
+        const saved = await manager.save(created);
+        return {
+          reservation: saved,
+          eventTitle: event.title,
+          ticketTypeName: ticketType.name,
+        };
       });
-      if (!event) {
-        throw new NotFoundException('Event not found');
-      }
 
-      const ticketType = await manager.findOne(TicketType, {
-        where: { id: dto.ticketTypeId, eventId: event.id },
-        lock: { mode: 'pessimistic_write' },
-      });
-      if (!ticketType) {
-        throw new NotFoundException('Ticket type not found for this event');
-      }
-
-      const reserved = await this.getSumOfReservedForTicketType(
-        manager,
-        ticketType.id,
-      );
-      const available = ticketType.quantity - reserved;
-      if (dto.quantity > available) {
-        throw new ConflictException('Not enough tickets available');
-      }
-
-      const reservationNumber = await this.allocateReservationNumber(
-        manager,
-        event.slug,
-      );
-      const holdMs = parseDurationToMs(
-        this.config.getOrThrow(Env.RESERVATION_HOLD_EXPIRES_IN, {
-          infer: true,
-        }),
-      );
-
-      const reservation = manager.create(Reservation, {
-        eventId: event.id,
-        ticketTypeId: ticketType.id,
-        reservationNumber,
-        email: dto.email,
-        quantity: dto.quantity,
-        status: ReservationStatus.Held,
-        expiresAt: new Date(Date.now() + holdMs),
+    this.notificationService
+      .sendEmail({
+        to: reservation.email,
+        subject: `Reservation held: ${reservation.reservationNumber}`,
+        template: 'reservation-held',
+        context: {
+          email: reservation.email,
+          reservationNumber: reservation.reservationNumber,
+          quantity: reservation.quantity,
+          eventTitle,
+          ticketTypeName,
+          expiresAt: reservation.expiresAt.toISOString(),
+        },
+      })
+      .catch((err: unknown) => {
+        this.logger.error(
+          `Held reservation email failed for ${reservation.email}`,
+          err instanceof Error ? err.stack : err,
+        );
       });
 
-      return manager.save(reservation);
-    });
+    return reservation;
   }
 
   async findByNumber(reservationNumber: string): Promise<Reservation> {
@@ -98,7 +132,29 @@ export class ReservationsService {
     }
 
     reservation.status = ReservationStatus.Confirmed;
-    return this.reservationsRepository.save(reservation);
+    const saved = await this.reservationsRepository.save(reservation);
+
+    this.notificationService
+      .sendEmail({
+        to: saved.email,
+        subject: `Reservation confirmed: ${saved.reservationNumber}`,
+        template: 'reservation-confirmed',
+        context: {
+          email: saved.email,
+          reservationNumber: saved.reservationNumber,
+          quantity: saved.quantity,
+          eventTitle: saved.event?.title ?? '',
+          ticketTypeName: saved.ticketType?.name ?? '',
+        },
+      })
+      .catch((err: unknown) => {
+        this.logger.error(
+          `Confirmed reservation email failed for ${saved.email}`,
+          err instanceof Error ? err.stack : err,
+        );
+      });
+
+    return saved;
   }
 
   async cancel(reservationNumber: string): Promise<Reservation> {
