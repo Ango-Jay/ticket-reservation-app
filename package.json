@@ -21,7 +21,10 @@
     "db:down": "docker compose down",
     "migration:run": "pnpm --filter @ticket-reservation/server migration:run",
     "migration:revert": "pnpm --filter @ticket-reservation/server migration:revert",
-    "migration:generate": "pnpm --filter @ticket-reservation/server migration:generate"
+    "migration:generate": "pnpm --filter @ticket-reservation/server migration:generate",
+    "bench:sql": "./bench/scripts/run-sql-bench.sh",
+    "bench:k6": "./bench/scripts/run-k6.sh",
+    "bench:k6:reads": "./bench/scripts/run-k6.sh mixed-read"
   },
   "engines": {
     "node": ">=20",
