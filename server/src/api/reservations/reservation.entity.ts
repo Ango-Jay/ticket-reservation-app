@@ -18,6 +18,9 @@ import { ReservationStatus } from './enums';
 @Index('IDX_reservations_held_expires_at', ['expiresAt'], {
   where: `"status" = 'held'`,
 })
+@Index('IDX_reservations_ticket_type_open', ['ticketTypeId', 'status'], {
+  where: `"status" IN ('held', 'confirmed')`,
+})
 export class Reservation {
   @PrimaryGeneratedColumn('uuid')
   id: string;
