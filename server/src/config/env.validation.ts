@@ -67,6 +67,7 @@ export const envValidationSchema = Joi.object<EnvironmentVariables>({
   EMAIL_FROM: Joi.string().required(),
   BACHS_API_KEY: Joi.string().required(),
   BACHS_API_BASE_URL: Joi.string().uri().required(),
+  BACHS_WEBHOOK_SECRET: Joi.string().required(),
 });
 
 export function validateEnv(

@@ -72,4 +72,22 @@ export class PaymentsService {
 
     return created;
   }
+
+  findByCheckoutId(checkoutId: string): Promise<Payment | null> {
+    return this.paymentsRepository.findOne({ where: { checkoutId } });
+  }
+
+  async markSucceeded(
+    payment: Payment,
+    chargeId: string | null,
+  ): Promise<Payment> {
+    payment.status = PaymentStatus.Succeeded;
+    payment.chargeId = chargeId;
+    return this.paymentsRepository.save(payment);
+  }
+
+  async markFailed(payment: Payment): Promise<Payment> {
+    payment.status = PaymentStatus.Failed;
+    return this.paymentsRepository.save(payment);
+  }
 }

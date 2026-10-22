@@ -1,7 +1,10 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { Env, EnvironmentVariables } from '../../../config/env';
-import type { CreateCheckoutInput, CreateCheckoutResult } from '../ports/payment.port';
+import type {
+  CreateCheckoutInput,
+  CreateCheckoutResult,
+} from '../ports/payment.port';
 
 interface BachsCheckoutSessionResponse {
   checkout_id?: string;

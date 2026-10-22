@@ -39,6 +39,7 @@ export const Env = {
   EMAIL_FROM: 'EMAIL_FROM',
   BACHS_API_KEY: 'BACHS_API_KEY',
   BACHS_API_BASE_URL: 'BACHS_API_BASE_URL',
+  BACHS_WEBHOOK_SECRET: 'BACHS_WEBHOOK_SECRET',
 } as const;
 
 export type EnvKey = (typeof Env)[keyof typeof Env];
@@ -80,6 +81,7 @@ export interface EnvironmentVariables {
   EMAIL_FROM: string;
   BACHS_API_KEY: string;
   BACHS_API_BASE_URL: string;
+  BACHS_WEBHOOK_SECRET: string;
 }
 
 /** Comma-separated CORS_ORIGINS env → allowed origin list. */

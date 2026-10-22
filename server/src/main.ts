@@ -13,7 +13,10 @@ import { AllExceptionsFilter } from './common/filters/all-exceptions.filter';
 import { EnvironmentVariables, Env, getCorsOrigins } from './config/env';
 
 async function bootstrap() {
-  const app = await NestFactory.create(AppModule, { bufferLogs: true });
+  const app = await NestFactory.create(AppModule, {
+    bufferLogs: true,
+    rawBody: true,
+  });
   const config = app.get(ConfigService<EnvironmentVariables, true>);
   const logger = app.get<LoggerService>(WINSTON_MODULE_NEST_PROVIDER);
 

@@ -151,6 +151,23 @@ export class ReservationsService {
     return this.confirmHeld(reservation);
   }
 
+  async confirmPaidFromWebhook(reservationId: string): Promise<boolean> {
+    const reservation = await this.reservationsRepository.findOne({
+      where: { id: reservationId },
+      relations: { event: true, ticketType: true },
+    });
+    if (!reservation || reservation.status !== ReservationStatus.Held) {
+      return false;
+    }
+    if (reservation.expiresAt.getTime() <= Date.now()) {
+      reservation.status = ReservationStatus.Expired;
+      await this.reservationsRepository.save(reservation);
+      return false;
+    }
+    await this.confirmHeld(reservation);
+    return true;
+  }
+
   async cancel(reservationNumber: string): Promise<Reservation> {
     let reservation = await this.requireByNumber(reservationNumber);
     reservation = await this.lazyExpire(reservation);
