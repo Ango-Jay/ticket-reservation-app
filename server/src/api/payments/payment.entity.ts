@@ -46,6 +46,9 @@ export class Payment {
   @Column({ name: 'checkout_id', type: 'varchar', length: 128, unique: true })
   checkoutId: string;
 
+  @Column({ name: 'checkout_url', type: 'varchar', length: 512, nullable: true })
+  checkoutUrl: string | null;
+
   @Column({ name: 'charge_id', type: 'varchar', length: 128, nullable: true })
   chargeId: string | null;
 

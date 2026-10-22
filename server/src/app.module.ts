@@ -5,6 +5,7 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 import { WinstonModule } from 'nest-winston';
 import { AdminsModule } from './api/admins/admins.module';
 import { EventsModule } from './api/events/events.module';
+import { PaymentsModule } from './api/payments/payments.module';
 import { ReservationsModule } from './api/reservations/reservations.module';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
@@ -30,6 +31,7 @@ import { typeOrmAsyncConfig } from './config/typeorm.config';
     TypeOrmModule.forRootAsync(typeOrmAsyncConfig),
     NotificationModule,
     EventsModule,
+    PaymentsModule,
     ReservationsModule,
     AdminsModule,
   ],

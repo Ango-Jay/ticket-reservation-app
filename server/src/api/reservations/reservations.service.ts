@@ -8,6 +8,7 @@ import {
 import { ConfigService } from '@nestjs/config';
 import { InjectRepository } from '@nestjs/typeorm';
 import { DataSource, EntityManager, Repository } from 'typeorm';
+import Decimal from 'decimal.js';
 import { NotificationService } from '../../common/notification/notification.service';
 import { Env, EnvironmentVariables } from '../../config/env';
 import { parseDurationToMs } from '../../utils/parse-duration';
@@ -15,6 +16,8 @@ import { randomAlphanumeric } from '../../utils/slugify';
 import { EventStatus } from '../events/enums';
 import { Event } from '../events/event.entity';
 import { TicketType } from '../events/ticket-type.entity';
+import type { CreateCheckoutResult } from '../integrations/ports/payment.port';
+import { PaymentsService } from '../payments/payments.service';
 import { CreateReservationDto } from './dto/create-reservation.dto';
 import { ReservationStatus } from './enums';
 import { Reservation } from './reservation.entity';
@@ -29,6 +32,7 @@ export class ReservationsService {
     private readonly dataSource: DataSource,
     private readonly config: ConfigService<EnvironmentVariables, true>,
     private readonly notificationService: NotificationService,
+    private readonly paymentsService: PaymentsService,
   ) {}
 
   async create(
@@ -118,43 +122,33 @@ export class ReservationsService {
     return this.lazyExpire(reservation);
   }
 
+  async checkout(
+    reservationNumber: string,
+  ): Promise<Reservation | CreateCheckoutResult> {
+    const reservation = await this.requireOpenHold(reservationNumber);
+    const amount = this.amountFor(reservation);
+    if (amount.isZero()) {
+      return this.confirmHeld(reservation);
+    }
+
+    return this.paymentsService.startCheckout({
+      reservationId: reservation.id,
+      amount,
+      currency: reservation.ticketType.currency,
+      email: reservation.email,
+      reservationNumber: reservation.reservationNumber,
+      expiresInMinutes: this.minutesUntil(reservation.expiresAt),
+    });
+  }
+
   async confirm(reservationNumber: string): Promise<Reservation> {
-    let reservation = await this.requireByNumber(reservationNumber);
-    reservation = await this.lazyExpire(reservation);
-
-    if (reservation.status !== ReservationStatus.Held) {
-      throw new ConflictException('Reservation cannot be confirmed');
+    const reservation = await this.requireOpenHold(reservationNumber);
+    if (this.amountFor(reservation).gt(0)) {
+      throw new ConflictException(
+        'Paid reservations are confirmed by the payment webhook',
+      );
     }
-    if (reservation.expiresAt.getTime() <= Date.now()) {
-      reservation.status = ReservationStatus.Expired;
-      await this.reservationsRepository.save(reservation);
-      throw new ConflictException('Reservation hold has expired');
-    }
-
-    reservation.status = ReservationStatus.Confirmed;
-    const saved = await this.reservationsRepository.save(reservation);
-
-    this.notificationService
-      .sendEmail({
-        to: saved.email,
-        subject: `Reservation confirmed: ${saved.reservationNumber}`,
-        template: 'reservation-confirmed',
-        context: {
-          email: saved.email,
-          reservationNumber: saved.reservationNumber,
-          quantity: saved.quantity,
-          eventTitle: saved.event?.title ?? '',
-          ticketTypeName: saved.ticketType?.name ?? '',
-        },
-      })
-      .catch((err: unknown) => {
-        this.logger.error(
-          `Confirmed reservation email failed for ${saved.email}`,
-          err instanceof Error ? err.stack : err,
-        );
-      });
-
-    return saved;
+    return this.confirmHeld(reservation);
   }
 
   async cancel(reservationNumber: string): Promise<Reservation> {
@@ -180,6 +174,63 @@ export class ReservationsService {
       throw new NotFoundException('Reservation not found');
     }
     return reservation;
+  }
+
+  private async requireOpenHold(
+    reservationNumber: string,
+  ): Promise<Reservation> {
+    let reservation = await this.requireByNumber(reservationNumber);
+    reservation = await this.lazyExpire(reservation);
+    if (reservation.status !== ReservationStatus.Held) {
+      throw new ConflictException('Reservation is not held');
+    }
+    if (reservation.expiresAt.getTime() <= Date.now()) {
+      reservation.status = ReservationStatus.Expired;
+      await this.reservationsRepository.save(reservation);
+      throw new ConflictException('Reservation hold has expired');
+    }
+    return reservation;
+  }
+
+  private async confirmHeld(reservation: Reservation): Promise<Reservation> {
+    reservation.status = ReservationStatus.Confirmed;
+    const saved = await this.reservationsRepository.save(reservation);
+    this.sendConfirmedEmail(saved);
+    return saved;
+  }
+
+  private amountFor(reservation: Reservation): Decimal {
+    if (!reservation.ticketType) {
+      throw new NotFoundException('Ticket type not found');
+    }
+    return new Decimal(reservation.ticketType.price).mul(reservation.quantity);
+  }
+
+  private minutesUntil(expiresAt: Date): number {
+    const minutes = Math.ceil((expiresAt.getTime() - Date.now()) / 60_000);
+    return Math.min(1440, Math.max(1, minutes));
+  }
+
+  private sendConfirmedEmail(saved: Reservation): void {
+    this.notificationService
+      .sendEmail({
+        to: saved.email,
+        subject: `Reservation confirmed: ${saved.reservationNumber}`,
+        template: 'reservation-confirmed',
+        context: {
+          email: saved.email,
+          reservationNumber: saved.reservationNumber,
+          quantity: saved.quantity,
+          eventTitle: saved.event?.title ?? '',
+          ticketTypeName: saved.ticketType?.name ?? '',
+        },
+      })
+      .catch((err: unknown) => {
+        this.logger.error(
+          `Confirmed reservation email failed for ${saved.email}`,
+          err instanceof Error ? err.stack : err,
+        );
+      });
   }
 
   private async lazyExpire(reservation: Reservation): Promise<Reservation> {
