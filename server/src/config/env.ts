@@ -37,6 +37,8 @@ export const Env = {
   ADMIN_BOOTSTRAP_EMAIL: 'ADMIN_BOOTSTRAP_EMAIL',
   RESEND_API_KEY: 'RESEND_API_KEY',
   EMAIL_FROM: 'EMAIL_FROM',
+  BACHS_API_KEY: 'BACHS_API_KEY',
+  BACHS_API_BASE_URL: 'BACHS_API_BASE_URL',
 } as const;
 
 export type EnvKey = (typeof Env)[keyof typeof Env];
@@ -76,6 +78,8 @@ export interface EnvironmentVariables {
   ADMIN_BOOTSTRAP_EMAIL?: string;
   RESEND_API_KEY: string;
   EMAIL_FROM: string;
+  BACHS_API_KEY: string;
+  BACHS_API_BASE_URL: string;
 }
 
 /** Comma-separated CORS_ORIGINS env → allowed origin list. */
