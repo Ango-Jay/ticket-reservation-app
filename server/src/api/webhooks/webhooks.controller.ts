@@ -13,6 +13,8 @@ import type { RawBodyRequest } from '@nestjs/common';
 import type { Request } from 'express';
 import { Repository } from 'typeorm';
 import { isUniqueViolation } from '../../utils/postgres-errors';
+import { PaymentProviderName } from '../payments/enums';
+import { WebhookContext } from './enums';
 import { CheckoutExpiredHandler } from './providers/bachs/checkout-expired.handler';
 import { CollectionFailedHandler } from './providers/bachs/collection-failed.handler';
 import { CollectionSucceededHandler } from './providers/bachs/collection-succeeded.handler';
@@ -53,7 +55,10 @@ export class WebhooksController {
 
     const payload = this.parsePayload(rawBody);
     const existing = await this.webhookEventsRepository.findOne({
-      where: { eventId: payload.id },
+      where: {
+        eventId: payload.id,
+        provider: PaymentProviderName.Bachs,
+      },
     });
     if (existing) {
       return { received: true };
@@ -63,7 +68,11 @@ export class WebhooksController {
 
     try {
       await this.webhookEventsRepository.save(
-        this.webhookEventsRepository.create({ eventId: payload.id }),
+        this.webhookEventsRepository.create({
+          eventId: payload.id,
+          provider: PaymentProviderName.Bachs,
+          context: WebhookContext.Payments,
+        }),
       );
     } catch (error) {
       if (!isUniqueViolation(error)) {
