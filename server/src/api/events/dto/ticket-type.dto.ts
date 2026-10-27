@@ -4,7 +4,6 @@ import {
   IsNumber,
   IsOptional,
   IsString,
-  IsUUID,
   Length,
   Matches,
   MaxLength,
@@ -13,10 +12,6 @@ import {
 } from 'class-validator';
 
 export class TicketTypeDto {
-  @IsOptional()
-  @IsUUID()
-  id?: string;
-
   @IsString()
   @IsNotEmpty()
   @MinLength(1)

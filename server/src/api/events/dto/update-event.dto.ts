@@ -1,7 +1,4 @@
-import { Type } from 'class-transformer';
 import {
-  ArrayMinSize,
-  IsArray,
   IsDateString,
   IsEnum,
   IsNotEmpty,
@@ -10,10 +7,8 @@ import {
   Matches,
   MaxLength,
   MinLength,
-  ValidateNested,
 } from 'class-validator';
 import { EventStatus } from '../enums';
-import { TicketTypeDto } from './ticket-type.dto';
 
 export class UpdateEventDto {
   @IsOptional()
@@ -49,11 +44,4 @@ export class UpdateEventDto {
   @IsOptional()
   @IsEnum(EventStatus)
   status?: EventStatus;
-
-  @IsOptional()
-  @IsArray()
-  @ArrayMinSize(1)
-  @ValidateNested({ each: true })
-  @Type(() => TicketTypeDto)
-  ticketTypes?: TicketTypeDto[];
 }

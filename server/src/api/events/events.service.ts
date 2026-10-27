@@ -6,13 +6,14 @@ import {
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import Decimal from 'decimal.js';
-import { DataSource, EntityManager, In, Not, Repository } from 'typeorm';
+import { DataSource, EntityManager, Not, Repository } from 'typeorm';
 import { randomAlphanumeric, slugify } from '../../utils/slugify';
 import { ReservationStatus } from '../reservations/enums';
 import { Reservation } from '../reservations/reservation.entity';
 import { CreateEventDto } from './dto/create-event.dto';
-import { TicketTypeDto } from './dto/ticket-type.dto';
+import { CreateTicketTypeDto } from './dto/create-ticket-type.dto';
 import { UpdateEventDto } from './dto/update-event.dto';
+import { UpdateTicketTypeDto } from './dto/update-ticket-type.dto';
 import { EventStatus } from './enums';
 import { Event } from './event.entity';
 import { TicketType } from './ticket-type.entity';
@@ -35,6 +36,8 @@ export class EventsService {
   constructor(
     @InjectRepository(Event)
     private readonly eventsRepository: Repository<Event>,
+    @InjectRepository(TicketType)
+    private readonly ticketTypesRepository: Repository<TicketType>,
     @InjectRepository(Reservation)
     private readonly reservationsRepository: Repository<Reservation>,
     private readonly dataSource: DataSource,
@@ -159,9 +162,6 @@ export class EventsService {
       }
 
       await manager.save(event);
-      if (dto.ticketTypes !== undefined) {
-        await this.syncTicketTypes(manager, event, dto.ticketTypes);
-      }
 
       const updated = await manager.findOne(Event, {
         where: { id },
@@ -181,6 +181,102 @@ export class EventsService {
     }
     event.status = EventStatus.Inactive;
     await this.eventsRepository.save(event);
+  }
+
+  async addTicketType(
+    eventId: string,
+    dto: CreateTicketTypeDto,
+  ): Promise<TicketType> {
+    const event = await this.eventsRepository.findOne({
+      where: { id: eventId },
+    });
+    if (!event) {
+      throw new NotFoundException('Event not found');
+    }
+
+    return this.ticketTypesRepository.save(
+      this.ticketTypesRepository.create({
+        eventId: event.id,
+        name: dto.name,
+        price: new Decimal(dto.price),
+        currency: dto.currency ?? 'NGN',
+        quantity: dto.quantity,
+      }),
+    );
+  }
+
+  async updateTicketType(
+    eventId: string,
+    ticketTypeId: string,
+    dto: UpdateTicketTypeDto,
+  ): Promise<TicketType> {
+    const ticketType = await this.requireTicketTypeForEvent(
+      eventId,
+      ticketTypeId,
+    );
+
+    if (dto.name !== undefined) {
+      ticketType.name = dto.name;
+    }
+    if (dto.price !== undefined) {
+      ticketType.price = new Decimal(dto.price);
+    }
+    if (dto.currency !== undefined) {
+      ticketType.currency = dto.currency;
+    }
+    if (dto.quantity !== undefined) {
+      ticketType.quantity = dto.quantity;
+    }
+
+    return this.ticketTypesRepository.save(ticketType);
+  }
+
+  async removeTicketType(
+    eventId: string,
+    ticketTypeId: string,
+  ): Promise<void> {
+    const ticketType = await this.requireTicketTypeForEvent(
+      eventId,
+      ticketTypeId,
+    );
+
+    const ticketTypeCount = await this.ticketTypesRepository.count({
+      where: { eventId },
+    });
+    if (ticketTypeCount <= 1) {
+      throw new BadRequestException('At least one ticket type is required');
+    }
+
+    const reservationCount = await this.reservationsRepository.count({
+      where: { ticketTypeId: ticketType.id },
+    });
+    if (reservationCount > 0) {
+      throw new ConflictException(
+        'Cannot remove ticket types that have reservations',
+      );
+    }
+
+    await this.ticketTypesRepository.delete({ id: ticketType.id });
+  }
+
+  private async requireTicketTypeForEvent(
+    eventId: string,
+    ticketTypeId: string,
+  ): Promise<TicketType> {
+    const event = await this.eventsRepository.findOne({
+      where: { id: eventId },
+    });
+    if (!event) {
+      throw new NotFoundException('Event not found');
+    }
+
+    const ticketType = await this.ticketTypesRepository.findOne({
+      where: { id: ticketTypeId, eventId },
+    });
+    if (!ticketType) {
+      throw new NotFoundException('Ticket type not found for this event');
+    }
+    return ticketType;
   }
 
   private async resolveUniqueSlug(
@@ -204,68 +300,6 @@ export class EventsService {
     }
 
     throw new ConflictException('Unable to allocate a unique event slug');
-  }
-
-  private async syncTicketTypes(
-    manager: EntityManager,
-    event: Event,
-    items: TicketTypeDto[],
-  ): Promise<void> {
-    if (items.length === 0) {
-      throw new BadRequestException('At least one ticket type is required');
-    }
-
-    const existingById = new Map(
-      event.ticketTypes.map((ticketType) => [ticketType.id, ticketType]),
-    );
-    const keepIds = new Set<string>();
-
-    for (const item of items) {
-      if (item.id) {
-        const existing = existingById.get(item.id);
-        if (!existing) {
-          throw new NotFoundException(
-            `Ticket type ${item.id} not found for this event`,
-          );
-        }
-        existing.name = item.name;
-        existing.price = new Decimal(item.price);
-        existing.currency = item.currency ?? 'NGN';
-        existing.quantity = item.quantity;
-        await manager.save(existing);
-        keepIds.add(existing.id);
-      } else {
-        const created = await manager.save(
-          manager.create(TicketType, {
-            eventId: event.id,
-            name: item.name,
-            price: new Decimal(item.price),
-            currency: item.currency ?? 'NGN',
-            quantity: item.quantity,
-          }),
-        );
-        keepIds.add(created.id);
-      }
-    }
-
-    const toRemove = event.ticketTypes.filter(
-      (ticketType) => !keepIds.has(ticketType.id),
-    );
-    if (toRemove.length === 0) {
-      return;
-    }
-
-    const removeIds = toRemove.map((ticketType) => ticketType.id);
-    const reservationCount = await manager.count(Reservation, {
-      where: { ticketTypeId: In(removeIds) },
-    });
-    if (reservationCount > 0) {
-      throw new ConflictException(
-        'Cannot remove ticket types that have reservations',
-      );
-    }
-
-    await manager.delete(TicketType, { id: In(removeIds) });
   }
 
   private async sumReservedByTicketType(

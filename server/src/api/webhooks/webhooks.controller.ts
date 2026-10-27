@@ -11,7 +11,8 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { ApiTags } from '@nestjs/swagger';
 import type { RawBodyRequest } from '@nestjs/common';
 import type { Request } from 'express';
-import { QueryFailedError, Repository } from 'typeorm';
+import { Repository } from 'typeorm';
+import { isUniqueViolation } from '../../utils/postgres-errors';
 import { CheckoutExpiredHandler } from './providers/bachs/checkout-expired.handler';
 import { CollectionFailedHandler } from './providers/bachs/collection-failed.handler';
 import { CollectionSucceededHandler } from './providers/bachs/collection-succeeded.handler';
@@ -65,7 +66,7 @@ export class WebhooksController {
         this.webhookEventsRepository.create({ eventId: payload.id }),
       );
     } catch (error) {
-      if (!this.isUniqueViolation(error)) {
+      if (!isUniqueViolation(error)) {
         throw error;
       }
     }
@@ -112,13 +113,5 @@ export class WebhooksController {
   private header(request: Request, name: string): string | undefined {
     const value = request.headers[name];
     return Array.isArray(value) ? value[0] : value;
-  }
-
-  private isUniqueViolation(error: unknown): boolean {
-    return (
-      error instanceof QueryFailedError &&
-      (error as QueryFailedError & { driverError?: { code?: string } })
-        .driverError?.code === '23505'
-    );
   }
 }
