@@ -7,7 +7,12 @@ import {
   UnauthorizedException,
   UseGuards,
 } from '@nestjs/common';
-import { ApiBearerAuth, ApiSecurity, ApiTags } from '@nestjs/swagger';
+import {
+  ApiBearerAuth,
+  ApiOperation,
+  ApiSecurity,
+  ApiTags,
+} from '@nestjs/swagger';
 import { AuthService } from './auth.service';
 import { REFRESH_TOKEN_HEADER } from './auth-headers';
 import { JwtAuthGuard } from './jwt-auth.guard';
@@ -22,6 +27,11 @@ export class AuthController {
   @ApiBearerAuth()
   @ApiSecurity('refresh-token')
   @HttpCode(HttpStatus.NO_CONTENT)
+  @ApiOperation({
+    summary: 'Logout',
+    description:
+      'Admin. Blacklists the access token and revokes the refresh session when `x-refresh-token` is provided (otherwise revokes all sessions for the admin). Returns 204.',
+  })
   async logout(
     @Headers('authorization') authorization?: string,
     @Headers(REFRESH_TOKEN_HEADER) refreshToken?: string,

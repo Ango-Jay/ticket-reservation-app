@@ -8,7 +8,7 @@ import {
   UnprocessableEntityException,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { ApiTags } from '@nestjs/swagger';
+import { ApiExcludeController } from '@nestjs/swagger';
 import { SkipThrottle } from '@nestjs/throttler';
 import type { RawBodyRequest } from '@nestjs/common';
 import type { Request } from 'express';
@@ -26,7 +26,7 @@ import {
 } from './webhook.contract';
 import { WebhookEvent } from './webhook-event.entity';
 
-@ApiTags('webhooks')
+@ApiExcludeController()
 @Controller('webhooks')
 export class WebhooksController {
   constructor(
