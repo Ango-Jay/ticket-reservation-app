@@ -48,6 +48,28 @@ export class ReservationsService {
           throw new NotFoundException('Event not found');
         }
 
+        await manager.query(
+          `SELECT pg_advisory_xact_lock(hashtext($1::text), hashtext($2::text))`,
+          [event.id, dto.email],
+        );
+
+        const maxOpenHolds = this.config.getOrThrow(
+          Env.MAX_OPEN_HOLDS_PER_EMAIL,
+          { infer: true },
+        );
+        const activeOpenHolds = await manager
+          .createQueryBuilder(Reservation, 'reservation')
+          .where('reservation.event_id = :eventId', { eventId: event.id })
+          .andWhere('reservation.email = :email', { email: dto.email })
+          .andWhere('reservation.status = :held', {
+            held: ReservationStatus.Held,
+          })
+          .andWhere('reservation.expires_at > :now', { now: new Date() })
+          .getCount();
+        if (activeOpenHolds >= maxOpenHolds) {
+          throw new ConflictException('Too many open holds for this email');
+        }
+
         const ticketType = await manager.findOne(TicketType, {
           where: { id: dto.ticketTypeId, eventId: event.id },
           lock: { mode: 'pessimistic_write' },

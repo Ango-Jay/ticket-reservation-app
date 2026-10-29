@@ -1,6 +1,8 @@
 import { Module } from '@nestjs/common';
 import { ConfigModule, ConfigService } from '@nestjs/config';
+import { APP_GUARD } from '@nestjs/core';
 import { ScheduleModule } from '@nestjs/schedule';
+import { ThrottlerGuard, ThrottlerModule } from '@nestjs/throttler';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { WinstonModule } from 'nest-winston';
 import { AdminsModule } from './api/admins/admins.module';
@@ -23,6 +25,13 @@ import { typeOrmAsyncConfig } from './config/typeorm.config';
       envFilePath: envFilePaths,
       validate: validateEnv,
     }),
+    ThrottlerModule.forRoot([
+      {
+        name: 'default',
+        ttl: 60_000,
+        limit: 100,
+      },
+    ]), // 100 requests per minute
     ScheduleModule.forRoot(),
     WinstonModule.forRootAsync({
       imports: [ConfigModule],
@@ -38,6 +47,12 @@ import { typeOrmAsyncConfig } from './config/typeorm.config';
     AdminsModule,
   ],
   controllers: [AppController],
-  providers: [AppService],
+  providers: [
+    AppService,
+    {
+      provide: APP_GUARD,
+      useClass: ThrottlerGuard,
+    },
+  ],
 })
 export class AppModule {}

@@ -7,6 +7,7 @@ import {
   Post,
 } from '@nestjs/common';
 import { ApiOperation, ApiTags } from '@nestjs/swagger';
+import { Throttle } from '@nestjs/throttler';
 import { CreateReservationDto } from './dto/create-reservation.dto';
 import { Reservation } from './reservation.entity';
 import { ReservationsService } from './reservations.service';
@@ -16,6 +17,7 @@ import { ReservationsService } from './reservations.service';
 export class ReservationsController {
   constructor(private readonly reservationsService: ReservationsService) {}
 
+  @Throttle({ default: { limit: 3, ttl: 60_000 } }) // 3 requests per minute
   @Post('events/:eventId/reservations')
   create(
     @Param('eventId', ParseUUIDPipe) eventId: string,
@@ -31,6 +33,7 @@ export class ReservationsController {
     return this.reservationsService.findByNumber(reservationNumber);
   }
 
+  @Throttle({ default: { limit: 3, ttl: 60_000 } }) // 3 requests per minute
   @Post('reservations/:reservationNumber/checkout')
   checkout(@Param('reservationNumber') reservationNumber: string) {
     return this.reservationsService.checkout(reservationNumber);

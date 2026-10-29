@@ -1,7 +1,9 @@
-import { Inject, Injectable } from '@nestjs/common';
+import { ConflictException, Inject, Injectable } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
 import { InjectRepository } from '@nestjs/typeorm';
 import Decimal from 'decimal.js';
 import { Repository } from 'typeorm';
+import { Env, EnvironmentVariables } from '../../config/env';
 import {
   PAYMENT_PORT,
   type CreateCheckoutResult,
@@ -26,6 +28,7 @@ export class PaymentsService {
     private readonly paymentsRepository: Repository<Payment>,
     @Inject(PAYMENT_PORT)
     private readonly paymentPort: PaymentPort,
+    private readonly config: ConfigService<EnvironmentVariables, true>,
   ) {}
 
   async startCheckout(
@@ -43,6 +46,17 @@ export class PaymentsService {
         checkoutId: pending.checkoutId,
         checkoutUrl: pending.checkoutUrl,
       };
+    }
+
+    const maxAttempts = this.config.getOrThrow(
+      Env.MAX_CHECKOUT_ATTEMPTS_PER_RESERVATION,
+      { infer: true },
+    );
+    const attemptCount = await this.paymentsRepository.count({
+      where: { reservationId: input.reservationId },
+    });
+    if (attemptCount >= maxAttempts) {
+      throw new ConflictException('Checkout attempts exceeded');
     }
 
     const created = await this.paymentPort.createCheckout({

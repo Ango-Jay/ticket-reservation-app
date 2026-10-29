@@ -9,6 +9,7 @@ import {
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { ApiTags } from '@nestjs/swagger';
+import { SkipThrottle } from '@nestjs/throttler';
 import type { RawBodyRequest } from '@nestjs/common';
 import type { Request } from 'express';
 import { Repository } from 'typeorm';
@@ -38,6 +39,7 @@ export class WebhooksController {
     private readonly checkoutExpiredHandler: CheckoutExpiredHandler,
   ) {}
 
+  @SkipThrottle()
   @Post('bachs')
   @HttpCode(200)
   async bachs(

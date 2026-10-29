@@ -62,6 +62,11 @@ export const envValidationSchema = Joi.object<EnvironmentVariables>({
   JWT_REFRESH_EXPIRES_IN: durationSchema,
   JWT_REFRESH_GRACE_MS: Joi.number().integer().min(0).required(),
   RESERVATION_HOLD_EXPIRES_IN: durationSchema,
+  MAX_OPEN_HOLDS_PER_EMAIL: Joi.number().integer().min(1).required(),
+  MAX_CHECKOUT_ATTEMPTS_PER_RESERVATION: Joi.number()
+    .integer()
+    .min(1)
+    .required(),
   ADMIN_BOOTSTRAP_EMAIL: Joi.string().email().optional().allow(''),
   RESEND_API_KEY: Joi.string().required(),
   EMAIL_FROM: Joi.string().required(),
