@@ -42,6 +42,9 @@ export const Env = {
   BACHS_API_KEY: 'BACHS_API_KEY',
   BACHS_API_BASE_URL: 'BACHS_API_BASE_URL',
   BACHS_WEBHOOK_SECRET: 'BACHS_WEBHOOK_SECRET',
+  CLOUDINARY_CLOUD_NAME: 'CLOUDINARY_CLOUD_NAME',
+  CLOUDINARY_API_KEY: 'CLOUDINARY_API_KEY',
+  CLOUDINARY_API_SECRET: 'CLOUDINARY_API_SECRET',
 } as const;
 
 export type EnvKey = (typeof Env)[keyof typeof Env];
@@ -86,6 +89,9 @@ export interface EnvironmentVariables {
   BACHS_API_KEY: string;
   BACHS_API_BASE_URL: string;
   BACHS_WEBHOOK_SECRET: string;
+  CLOUDINARY_CLOUD_NAME: string;
+  CLOUDINARY_API_KEY: string;
+  CLOUDINARY_API_SECRET: string;
 }
 
 /** Comma-separated CORS_ORIGINS env → allowed origin list. */

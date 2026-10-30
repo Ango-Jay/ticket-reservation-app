@@ -4,9 +4,11 @@ import {
   IsNotEmpty,
   IsOptional,
   IsString,
+  IsUrl,
   Matches,
   MaxLength,
   MinLength,
+  ValidateIf,
 } from 'class-validator';
 import { EventStatus } from '../enums';
 
@@ -40,6 +42,11 @@ export class UpdateEventDto {
   @IsString()
   @MaxLength(255)
   location?: string | null;
+
+  @IsOptional()
+  @ValidateIf((_, value) => value !== null)
+  @IsUrl({ require_protocol: true })
+  imageUrl?: string | null;
 
   @IsOptional()
   @IsEnum(EventStatus)

@@ -105,6 +105,7 @@ export class EventsService {
         startsAt: new Date(dto.startsAt),
         expiresAt: dto.expiresAt ? new Date(dto.expiresAt) : null,
         location: dto.location ?? null,
+        imageUrl: dto.imageUrl ?? null,
         status: EventStatus.Active,
       });
       const saved = await manager.save(event);
@@ -156,6 +157,9 @@ export class EventsService {
       }
       if (dto.location !== undefined) {
         event.location = dto.location;
+      }
+      if (dto.imageUrl !== undefined) {
+        event.imageUrl = dto.imageUrl;
       }
       if (dto.status !== undefined) {
         event.status = dto.status;

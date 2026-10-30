@@ -35,6 +35,9 @@ export class Event {
   @Column({ type: 'varchar', length: 255, nullable: true })
   location: string | null;
 
+  @Column({ name: 'image_url', type: 'text', nullable: true })
+  imageUrl: string | null;
+
   @Column({
     type: 'varchar',
     length: 32,

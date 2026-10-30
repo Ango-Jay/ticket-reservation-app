@@ -7,6 +7,7 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 import { WinstonModule } from 'nest-winston';
 import { AdminsModule } from './api/admins/admins.module';
 import { EventsModule } from './api/events/events.module';
+import { FileModule } from './api/file/file.module';
 import { PaymentsModule } from './api/payments/payments.module';
 import { ReservationsModule } from './api/reservations/reservations.module';
 import { WebhooksModule } from './api/webhooks/webhooks.module';
@@ -41,6 +42,7 @@ import { typeOrmAsyncConfig } from './config/typeorm.config';
     TypeOrmModule.forRootAsync(typeOrmAsyncConfig),
     NotificationModule,
     EventsModule,
+    FileModule,
     PaymentsModule,
     ReservationsModule,
     WebhooksModule,
